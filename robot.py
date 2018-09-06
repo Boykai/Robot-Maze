@@ -21,6 +21,7 @@ class Robot(object):
                           [maze_dim / 2, maze_dim / 2 - 1],
                           [maze_dim / 2, maze_dim / 2]]
         self.goal_success = False
+        self.testing = False
                           
     def map_cell(self, sensors):
         '''
@@ -175,6 +176,31 @@ class Robot(object):
                 if self.model[x2][y2] == 0:
                     opened.append((new_location, tune + 1))
                     self.update_model(new_location, tune + 1)
+    
+    def action_grid(self):
+        '''
+        Determines and stores the best action for the agent for each cell.
+        
+        :param: NULL
+        
+        :return: NULL
+        '''
+        vals = [[1,3,5,7,9,11,13,15],
+                [2,3,6,7,10,11,14,15],
+                [4,5,6,7,12,13,14,15],
+                [8,9,10,11,12,13,14,15]]
+                
+        possible = ['up','right','down','left']
+        
+        trans = [[-1,0],[0,1],[1,0],[0,-1]]
+        
+        for i in range(len(self.model)):
+            for j in range(len(self.model[0])):
+                for k in range(len(vals)):
+                    if self.dir_grid[i][j] in vals[k]:
+                        if self.model[i + trans[k][0]][j + trans[k][1]] == self.model[i][j] - 1:
+                            self.action_grid[i][j] = possible[k]
+        
         
     def next_move(self, sensors):
         '''
@@ -219,5 +245,10 @@ class Robot(object):
                 self.make_model()
                 print('Training Model: \n')
                 print('{}'.format(self.model))
-                    
+                
+                self.action_grid()
+                self.reset()
+                self.testing = True
+                return ('Reset', 'Reset')
+                
         return rotation, movement
