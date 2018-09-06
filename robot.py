@@ -12,7 +12,8 @@ class Robot(object):
         self.location = [0, 0]
         self.heading = 'up'
         self.maze_dim = maze_dim
-        self.val_grid = [[0 for row in range(0, self.maze_dim)] for col in range(0, self.maze_dim)]
+        self.dir_grid = [[0 for row in range(0, self.maze_dim)] for col in range(0, self.maze_dim)]
+        self.cell_count = 0
         
     def map_cell(self, sensors):
         '''
@@ -28,18 +29,32 @@ class Robot(object):
         headings = ['left', 'up', 'right', 'down']
         directions = [8, 1, 2, 4]
         
-        if self.val_grid[x][y] == 0:
+        if self.dir_grid[x][y] == 0:
             for i in range(len(headings)):
                 if self.heading == headings[i]:
-                    self.val_grid[x][y] += directions[(i + 2) % 4]
+                    self.dir_grid[x][y] += directions[(i + 2) % 4]
                     if sensors[0] > 0:
-                        self.val_grid[x][y] += directions[i - 1]
+                        self.dir_grid[x][y] += directions[i - 1]
                     if sensors[1] > 0:
-                        self.val_grid[x][y] += directions[i]
+                        self.dir_grid[x][y] += directions[i]
                     if sensors[2] > 0:
-                        self.val_grid[x][y] += directions[(i + 1) % 4]
+                        self.dir_grid[x][y] += directions[(i + 1) % 4]
         
-        self.val_grid[self.maze_dim - 1][0] = 1
+        self.dir_grid[self.maze_dim - 1][0] = 1
+    
+    def breadcrumb(self):
+        '''
+        Counts the number of unique cells visited.
+
+        :param: NULL
+        
+        :return: NULL
+        '''
+        x, y = self.location
+        
+        if self.count_grid[x][y] == 0:
+            self.count_grid[x][y] = 1
+            self.unique += 1
         
     def next_move(self, sensors):
         '''
@@ -68,5 +83,6 @@ class Robot(object):
         
         # Record agent sensor data current location cell
         self.map_cell(sensors)
+        self.breadcrumb()
 
         return rotation, movement
