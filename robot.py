@@ -13,7 +13,8 @@ class Robot(object):
         self.heading = 'up'
         self.maze_dim = maze_dim
         self.dir_grid = [[0 for row in range(0, self.maze_dim)] for col in range(0, self.maze_dim)]
-        self.model = [[0 for row in range(0,self.maze_dim)] for col in range(0,self.maze_dim)]
+        self.count_grid = [[0 for row in range(1, self.maze_dim + 1)] for col in range(1, self.maze_dim + 1)]
+        self.model = [[0 for row in range(0, self.maze_dim)] for col in range(0, self.maze_dim)]
         self.cell_count = 0
         self.goal_area = [[maze_dim / 2 - 1, maze_dim / 2 - 1],
                           [maze_dim / 2 - 1, maze_dim / 2],
@@ -78,7 +79,39 @@ class Robot(object):
         self.model[x][y] = tune
         
         return self.model
+    
+    def act_legal(self, location):
+        '''
+        Determines what actions are legal and returns the value
         
+        :param location: Location of agent model
+            (a tuple of ints, i.e. (0, 1))
+        
+        :return actions: NULL
+            (a list of strings, i.e. ['left', 'up'])
+        '''
+        x, y = location
+        actions = []
+        
+        vals = [[1,3,5,7,9,11,13,15],
+                [2,3,6,7,10,11,14,15],
+                [4,5,6,7,12,13,14,15],
+                [8,9,10,11,12,13,14,15]]
+                
+        possible = ['up','right','down','left']
+        
+        for i in range(len(vals)):
+            if self.dir_grid[x][y] in vals[0]:
+                actions.extend([possible[0]])
+            if self.dir_grid[x][y] in vals[1]:
+                actions.extend([possible[1]])
+            if self.dir_grid[x][y] in vals[2]:
+                actions.extend([possible[2]])
+            if self.dir_grid[x][y] in vals[3]:
+                actions.extend([possible[3]])
+            
+            return actions
+            
     def make_model(self):
         '''
         Creates ML model for agent based on the first training run recorded
@@ -88,7 +121,6 @@ class Robot(object):
         
         :return: NULL
         '''
-        
         opened = []
         tune = 1
         trans = [[-1, 0], [0, 1], [1, 0], [0, -1]]
@@ -107,7 +139,42 @@ class Robot(object):
         for cell in opened:
             self.update_model(cell[0], cell[1])
 
+        # Check all valid possible directions for model agent
+        while self.model[self.maze_dim -1][0] == 0 and len(opened) != 0:
+            location, h = opened.pop(0)
+            actions = self.act_legal(location)
 
+            if 'up' in actions and self.count_grid[location[0]][location[1]] != 0:
+                x2 = location[0] + trans[0][0]
+                y2 = location[1] + trans[0][1]
+                new_location = x2, y2
+                if self.model[x2][y2] == 0 and self.count_grid[location[0]][location[1]] != 0:
+                    opened.append((new_location, tune + 1))
+                    self.update_model(new_location, tune + 1)
+            
+            if 'right' in actions:
+                x2 = location[0] + trans[1][0]
+                y2 = location[1] + trans[1][1]
+                new_location = x2, y2
+                if self.model[x2][y2] == 0 and self.count_grid[location[0]][location[1]] != 0:
+                    opened.append((new_location, tune + 1))
+                    self.update_model(new_location, tune + 1)
+            
+            if 'down' in actions:
+                x2 = location[0] + trans[2][0]
+                y2 = location[1] + trans[2][1]
+                new_location = x2, y2
+                if self.model[x2][y2] == 0 and self.count_grid[location[0]][location[1]] != 0:
+                    opened.append((new_location, tune + 1))
+                    self.update_model(new_location, tune + 1)
+        
+            if 'left' in actions:
+                x2 = location[0] + trans[3][0]
+                y2 = location[1] + trans[3][1]
+                new_location = x2, y2
+                if self.model[x2][y2] == 0:
+                    opened.append((new_location, tune + 1))
+                    self.update_model(new_location, tune + 1)
         
     def next_move(self, sensors):
         '''
