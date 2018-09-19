@@ -1,7 +1,7 @@
 from maze import Maze
 from robot import Robot
 import sys
-
+from showrobot import ShowRobot # FOR TESTING
 # global dictionaries for robot movement and sensing
 dir_sensors = {'u': ['l', 'u', 'r'], 'r': ['u', 'r', 'd'],
                'd': ['r', 'd', 'l'], 'l': ['d', 'l', 'u'],
@@ -31,9 +31,13 @@ if __name__ == '__main__':
     # Record robot performance over two runs.
     runtimes = []
     total_time = 0
+    ###
+    sr = ShowRobot(str(sys.argv[1]))                    # FOR TESTING
+    sr.start_maze()                                     # FOR TESTING
+    ### 
     for run in range(2):
         print "Starting run {}.".format(run)
-
+        
         # Set the robot in the start position. Note that robot position
         # parameters are independent of the robot itself.
         robot_pos = {'location': [0, 0], 'heading': 'up'}
@@ -43,6 +47,7 @@ if __name__ == '__main__':
         while run_active:
             # check for end of time
             total_time += 1
+            sr.draw_robot_action(robot_pos['location']) # FOR TESTING
             if total_time > max_time:
                 run_active = False
                 print "Allotted time exceeded."
