@@ -225,6 +225,8 @@ class Robot(object):
         x, y = self.location
         moves = ['left', 'forward', 'right']
         possible_moves = []
+        rotation = 0
+        movement = 0
 
         # Store possible moves based on sensor data
         for i in range(len(sensors)):
@@ -455,6 +457,8 @@ class Robot(object):
                  resetting the agent takes a value of ('reset', 'reset')
             (a tuple of ints, i.e. [90, 1])
         """
+        rotation = 0
+        movement = 0
         # Record agent sensor data current location cell
         x, y = self.location
         self.map_cell(sensors)

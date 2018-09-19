@@ -32,8 +32,9 @@ if __name__ == '__main__':
     runtimes = []
     total_time = 0
     ###
-    sr = ShowRobot(str(sys.argv[1]))                    # FOR TESTING
-    sr.start_maze()                                     # FOR TESTING
+    sr = ShowRobot(str(sys.argv[1]))    # FOR TESTING
+    sr.start_maze() # FOR TESTING
+    show_robot_on = False # FOR TESTING
     ### 
     for run in range(2):
         print "Starting run {}.".format(run)
@@ -47,7 +48,10 @@ if __name__ == '__main__':
         while run_active:
             # check for end of time
             total_time += 1
-            sr.draw_robot_action(robot_pos['location']) # FOR TESTING
+            
+            if show_robot_on:   # FOR TESTING
+                sr.draw_robot_action(robot_pos['location']) # FOR TESTING
+            
             if total_time > max_time:
                 run_active = False
                 print "Allotted time exceeded."
@@ -63,6 +67,7 @@ if __name__ == '__main__':
                 if run == 0 and hit_goal:
                     run_active = False
                     runtimes.append(total_time)
+                    show_robot_on = True # FOR TESTING
                     print "Ending first run. Starting next run."
                     break
                 elif run == 0 and not hit_goal:
