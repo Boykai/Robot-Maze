@@ -1,7 +1,6 @@
 import numpy as np
 import random
 
-
 class Robot(object):
     def __init__(self, maze_dim):
         """
@@ -26,12 +25,13 @@ class Robot(object):
 
     def reset(self):
         """
-        Resets the Robot class attributes to the initialized values, for most of the varibles.
+        Resets the Robot class attributes to the initialized values, for most of the variables.
 
         :return: NULL
         """
         self.location = [self.maze_dim - 1, 0]
         self.heading = 'up'
+        self.training = not self.training
         print('\n\nResetting robot for Training')
         print('\nCount Grid:\n{}'.format(self.count_grid))
         print('\nDirection Grid:\n{}'.format(self.dir_grid))
@@ -100,7 +100,7 @@ class Robot(object):
         :param location: Location of agent model
             (a tuple of ints, i.e. (0, 1))
         
-        :return actions: NULL
+        :return actions: legal actions available
             (a list of strings, i.e. ['left', 'up'])
         """
         x, y = location
@@ -211,7 +211,222 @@ class Robot(object):
                     if self.dir_grid[i][j] in vals[k]:
                         if self.model[i + trans[k][0]][j + trans[k][1]] == self.model[i][j] - 1:
                             self.action_grid[i][j] = possible[k]
-        
+
+    def make_action(self, sensors):
+        """
+        Determines the rotation and movement based on what the best action for the robot to execute.
+
+        :param sensors: the sensor values of agent for a given cell
+            (a list of ints, i.e. [0, 0, 1])
+
+        :return: rotation, movement: the rotation and movement the robot agent should act on next
+            (a tuple of ints, i.e. [90, 1])
+        """
+        x, y = self.location
+        moves = ['left', 'forward', 'right']
+        possible_moves = []
+
+        # Store possible moves based on sensor data
+        for i in range(len(sensors)):
+            # There is a wall
+            if sensors[i] > 0:
+                possible_moves.extend([moves[i]])
+        # No possible moves, robot agent hit dead end
+        if not possible_moves:
+            rotation = 90
+            movement = 0
+
+        moves_up = []
+        moves_down = []
+        moves_left = []
+        moves_right = []
+        actions = []
+
+        # EXPLORATION
+        # Store move based on heading and sensors
+        if not self.training:
+            if self.heading == 'up':
+                if 'right' in possible_moves:
+                    moves_right.extend(range(1, sensors[2] + 1))
+                if 'forward' in possible_moves:
+                    moves_up.extend(range(1, sensors[1] + 1))
+                if 'left' in possible_moves:
+                    moves_left.extend(range(1, sensors[0] + 1))
+            elif self.heading == 'right':
+                if 'right' in possible_moves:
+                    moves_down.extend(range(1, sensors[2] + 1))
+                if 'forward' in possible_moves:
+                    moves_right.extend(range(1, sensors[1] + 1))
+                if 'left' in possible_moves:
+                    moves_up.extend(range(1, sensors[0] + 1))
+            elif self.heading == 'down':
+                if 'right' in possible_moves:
+                    moves_left.extend(range(1, sensors[2] + 1))
+                if 'forward' in possible_moves:
+                    moves_down.extend(range(0, sensors[1] + 1))
+                if 'left' in possible_moves:
+                    moves_right.extend(range(1, sensors[0] + 1))
+            elif self.heading == 'left':
+                if 'right' in possible_moves:
+                    moves_up.extend(range(1, sensors[2] + 1))
+                if 'forward' in possible_moves:
+                    moves_left.extend(range(1, sensors[1] + 1))
+                if 'left' in possible_moves:
+                    moves_down.extend(range(1, sensors[0] + 1))
+
+            # Store actions based on movement options
+            if 1 in moves_up:
+                if self.count_grid[x - 1][y] != 1:
+                    actions.extend([1])
+            if 2 in moves_up:
+                if self.count_grid[x - 2][y] != 1:
+                    actions.extend([11])
+            if 3 in moves_up:
+                if self.count_grid[x - 3][y] != 1:
+                    actions.extend([101])
+            if 1 in moves_right:
+                if self.count_grid[x][y + 1] != 1:
+                    actions.extend([2])
+            if 2 in moves_right:
+                if self.count_grid[x][y + 2] != 1:
+                    actions.extend([12])
+            if 3 in moves_right:
+                if self.count_grid[x][y + 3] != 1:
+                    actions.extend([102])
+            if 1 in moves_down:
+                if self.count_grid[x + 1][y] != 1:
+                    actions.extend([3])
+            if 2 in moves_down:
+                if self.count_grid[x + 2][y] != 1:
+                    actions.extend([13])
+            if 3 in moves_down:
+                if self.count_grid[x + 3][y] != 1:
+                    actions.extend([103])
+            if 1 in moves_left:
+                if self.count_grid[x][y - 1] != 1:
+                    actions.extend([4])
+            if 2 in moves_left:
+                if self.count_grid[x][y - 2] != 1:
+                    actions.extend([14])
+            if 3 in moves_left:
+                if self.count_grid[x][y - 3] != 1:
+                    actions.extend([104])
+
+            # Make sure there are valid actions available
+            if actions:
+                action = random.choice(actions)
+                possible_actions = [1, 2, 3, 4, 11, 12, 13, 14, 101, 102, 103, 104]
+                directions = ['up', 'right', 'down', 'left']
+
+                for i in range(len(possible_actions)):
+                    if possible_actions[i] == action:
+                        movement = len(str(possible_actions[i]))
+                        direction = directions[i % 4]
+                    if x in self.goal_area and y in self.goal_area:
+                        movement = 1
+                    if self.action_count < 5:
+                        movement = 1
+
+                # Determine rotation value based on direction and heading
+                for i in range(len(directions)):
+                    if self.heading == directions[i]:
+                        if direction == directions[i]:
+                            rotation = 0
+                        elif direction == directions[i - 1]:
+                            rotation = -90
+                        elif direction == directions[(i + 1) % 4]:
+                            rotation = 90
+            # Determine movement value based on rotation and possible moves
+            elif possible_moves != 0:
+                rotations = [-90, 0, 90]
+                possible_rotations = []
+                for i in range(len(sensors)):
+                    for j in range(len(possible_moves)):
+                        if possible_moves[j] == moves[i]:
+                            possible_rotations.append(rotations[i])
+                            rotation = random.choice(possible_rotations)
+                            movement = 1
+            # Robot agent has hit a dead end, turn around
+            else:
+                movement = 0
+                rotation = 90
+
+        # TRAINING
+        # Determine movement based on robot agent trained model
+        if self.training:
+            directions = ['up', 'right', 'down', 'left']
+            delta = [[-1, 0], [0, 1], [1, 0], [0, -1]]
+            action = self.action_grid[x][y]
+
+            for i in range(len(directions)):
+                # Determine movement value, 1, 2, 3
+                if self.action_grid[x][y] == directions[i]:
+                    if self.action_grid[x + delta[i][0]][y + delta[i][1]] == directions[i]:
+                        if self.action_grid[x + (2 * delta[i][0])][y + (2 * delta[i][1])] == directions[i]:
+                            movement = 3
+                        else:
+                            movement = 2
+                    else:
+                        movement = 1
+                # Determine rotation value, -90, 0, 90
+                if self.heading == directions[i]:
+                    if action == directions[i]:
+                        rotation = 0
+                    elif action == directions[i - 1]:
+                        rotation = -90
+                    elif action == directions[(i + 1) % 4]:
+                        rotation = 90
+
+        # Determine new heading based on current heading and rotation values
+        new_heading = ''
+        if self.heading == 'up':
+            if rotation == 0:
+                new_heading = 'up'
+                x -= movement
+            elif rotation == -90:
+                new_heading = 'left'
+                y -= movement
+            elif rotation == 90:
+                new_heading = 'right'
+                y += movement
+        elif self.heading == 'right':
+            if rotation == 0:
+                new_heading = 'right'
+                y += movement
+            elif rotation == -90:
+                new_heading = 'up'
+                x -= movement
+            elif rotation == 90:
+                new_heading = 'down'
+                x += movement
+        elif self.heading == 'down':
+            if rotation == 0:
+                new_heading = 'down'
+                x += movement
+            elif rotation == -90:
+                new_heading = 'right'
+                y += movement
+            elif rotation == 90:
+                new_heading = 'left'
+                y -= movement
+        else:
+            if rotation == 0:
+                new_heading = 'left'
+                y -= movement
+            elif rotation == -90:
+                new_heading = 'down'
+                x += movement
+            elif rotation == 90:
+                new_heading = 'up'
+                x -= movement
+
+        # Update robot agent class variables based on action
+        self.heading = new_heading
+        self.location = [x, y]
+        self.action_count += 1
+
+        return rotation, movement
+
     def next_move(self, sensors):
         """
         Use this function to determine the next move the robot should make,
@@ -232,27 +447,26 @@ class Robot(object):
         If the robot wants to end a run (e.g. during the first training run in
         the maze) then returing the tuple ('Reset', 'Reset') will indicate to
         the tester to end the run and return the robot to the start.
-        """
 
-        rotation = 0
-        movement = 0
-        
+        :param sensors: the sensor values of agent for a given cell
+            (a list of ints, i.e. [0, 0, 1])
+
+        :return: rotation, movement: the rotation and movement the robot agent should act on next
+                 resetting the agent takes a value of ('reset', 'reset')
+            (a tuple of ints, i.e. [90, 1])
+        """
         # Record agent sensor data current location cell
         x, y = self.location
         self.map_cell(sensors)
         self.breadcrumb()
 
+        # Check if robot agent is within goal area
         if [x, y] == self.goal_area:
             self.goal_success = True
             print('Successfully found goal. Agent at {}, {}.'.format(x, y))
 
+        # Reset run
         if not self.training and self.goal_success:
-            print('\ntest')
-            print(self.cell_count)
-            print(self.maze_dim)
-            print(self.action_count)
-            print((self.cell_count >= (self.maze_dim ** 2)))
-            print('\n')
             if (self.cell_count >= (self.maze_dim ** 2)) or (self.action_count >= 300):
                 # Training run results
                 print('\nTraining Run Results:\n')
@@ -262,10 +476,16 @@ class Robot(object):
                 self.make_model()
                 print('\nTraining Model:\n')
                 print('{}'.format(self.model))
-                
+
+                # Make action grid
                 self.make_action_grid()
                 self.reset()
-                self.training = True
                 return 'Reset', 'Reset'
 
+        # Final run
+        rotation, movement = self.make_action(sensors)
+        print('\nLocation: {} \tRotation: {} \tMovement: {} \tAction Count:{}'.format(self.location,
+                                                                                    rotation,
+                                                                                    movement,
+                                                                                    self.action_count))
         return rotation, movement
