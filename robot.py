@@ -21,7 +21,6 @@ class Robot(object):
         self.action_count = 0
         self.goal_success = False
         self.training = False
-        random.seed(0)
 
     def reset(self):
         """
@@ -457,9 +456,8 @@ class Robot(object):
                  resetting the agent takes a value of ('reset', 'reset')
             (a tuple of ints, i.e. [90, 1])
         """
-        rotation = 0
-        movement = 0
         # Record agent sensor data current location cell
+        max_actions = 700
         x, y = self.location
         self.map_cell(sensors)
         self.breadcrumb()
@@ -471,7 +469,7 @@ class Robot(object):
 
         # Reset run
         if not self.training and self.goal_success:
-            if (self.cell_count >= (self.maze_dim ** 2)) or (self.action_count >= 300):
+            if (self.cell_count >= (self.maze_dim ** 2)) or (self.action_count >= max_actions):
                 # Training run results
                 print('\nTraining Run Results:\n')
                 print('{}'.format(self.dir_grid))
