@@ -96,7 +96,7 @@ class ShowRobot(object):
         self.env.penup()
         self.env.end_fill()
         
-        time.sleep(0.00001)
+        time.sleep(0.001)
 
         
 if __name__ == '__main__':
